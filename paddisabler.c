@@ -1,3 +1,15 @@
+/*
+  A very simplified clone of syndaemon. Upon keypress, disables a pointer
+  device. The device can be given as an argument. For possible device names
+  run: xinput list
+
+  GPL license
+  
+  Authors:
+  Kalle Kankare <kalle.kankare@iki.fi>
+
+ */
+
 #define _BSD_SOURCE
 #define _POSIX_SOURCE
 
@@ -5,7 +17,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
-
 #include <signal.h>
 
 #include <unistd.h>
@@ -17,7 +28,6 @@ static int verbose=0;
 
 static char *pointer_device = "Logitech USB Receiver";
 static char *pointer_property = "Device Enabled";
-
 
 
 static void dprintf(const char *format,...)
@@ -76,23 +86,17 @@ static void sighandler(int num)
 
 static void sighandler_install()
 {
-  int signals[] = {
-    SIGHUP, SIGINT, SIGQUIT, SIGILL, SIGTRAP, SIGABRT,
-    SIGBUS, SIGFPE, SIGUSR1, SIGSEGV, SIGUSR2, SIGPIPE,
-    SIGALRM, SIGTERM,
-  };
+  int signals[] = {SIGHUP,SIGINT,SIGSEGV,SIGTERM,0};
 
-  struct sigaction act;
-  sigset_t set;
+  struct sigaction action;
   int i;
 
-  sigemptyset(&set);
-  act.sa_handler=sighandler;
-  act.sa_mask=set;
-  act.sa_flags=0;
+  action.sa_handler=sighandler;
+  sigemptyset(&action.sa_mask);
+  action.sa_flags=0;
 
-  for(i=0;i<sizeof(signals)/sizeof(*signals);i++)
-    if(sigaction(signals[i],&act,NULL) < 0)
+  for(i=0;signals[i] != 0;i++)
+    if(sigaction(signals[i],&action,NULL) < 0)
     {
       perror("sigaction");
       exit(1);
