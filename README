@@ -2,14 +2,12 @@ Touchpad disabler
 
 2010.09.10
 
-Has similar functionality as syndaemon in the xf86-input-synaptics package:
-
-http://cgit.freedesktop.org/xorg/driver/xf86-input-synaptics/
-
 This disables the touchpad for a moment, when if there is activity in the
 keyboard. Similar to syndaemon with the exception that the to-be disabled
 pointer device does not have to be a synaptics touchpad. And this is much
-simpler.
+simpler. Syndaemon is a part of the xf86-input-synaptics package:
+
+http://cgit.freedesktop.org/xorg/driver/xf86-input-synaptics/
 
 This was created, because the current (2.6.34-gentoo-r1) synaptics driver does
 not support the touchpad that I have in my laptop:
