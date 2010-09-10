@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
 
 #include <signal.h>
 
@@ -12,9 +13,28 @@
 #include <X11/Xlib.h>
 #include <X11/extensions/XInput.h>
 
+static int verbose=0;
+
 static char *pointer_device = "Logitech USB Receiver";
 static char *pointer_property = "Device Enabled";
 
+
+
+static void dprintf(const char *format,...)
+{
+  va_list ap;
+
+  if(!verbose)
+    return;
+    
+  va_start(ap,format);
+  vprintf(format,ap);
+  va_end(ap);
+
+  return;
+}
+
+/* use xinput program to enable and disable the pointer device */
 static int pointer_toggle(int on)
 {
   char buf[256];
@@ -24,69 +44,33 @@ static int pointer_toggle(int on)
   snprintf(buf,sizeof(buf),"xinput set-prop \"%s\" \"%s\" %d",
     pointer_device,pointer_property,on);
 
-  printf("running command [%s]\n",buf);
+  dprintf("running command [%s]\n",buf);
 
   return system(buf);
 }
 
-static void ioprint(char *buf,size_t size)
-{
-  int i;
-  for(i=0;i<size;i++)
-    printf("%02x%c",(char)buf[i],(i+1) % 20 ? ' ' : '\n');
-  puts("");
-}
-
+/* probe if keyboard has been active */
 static int keyboard_active(Display *disp)
 {
-  static char buf1[32],buf2[32];
-  static char *map_old=buf1,*map_new=buf2;
-  int beta;
-  int ret=0;
-  char *tmp;
+  char map[32];
+  int i;
 
-  XQueryKeymap(disp,map_new);
+  XQueryKeymap(disp,map);
 
+  for(i=0;i<sizeof(map);i++)
+    if(map[i] != 0)
+      return 1;
 
-  for(beta=0;beta<sizeof(buf1);beta++)
-    if(map_new[beta] != 0)
-    {
-      ret=1;
-      break;
-    }
-  /*
-  if(memcmp(map_new,map_old,sizeof(buf1)) != 0)
-    ret=1;
-  */
-
-  /*
-  for(beta=0;beta<sizeof(buf1);beta++)
-    if(map_new[beta] != map_old[beta])
-    {
-      ret=1;
-      break;
-    }
-  */
-  /*
-  printf("old: %p\n",map_old);
-  ioprint(map_old,sizeof(buf1));
-
-  printf("new: %p\n", map_new);
-  ioprint(map_new,sizeof(buf1));
-  */
-
-  tmp=map_old;
-  map_old=map_new;
-  map_new=tmp;
-
-  return ret;
+  return 0;
 }
 
+
+/* quit and enable the pointer device */
 static void sighandler(int num)
 {
   pointer_toggle(1);
 
-  printf("enabling pointer device\n");
+  dprintf("enabling pointer device\n");
   exit(1);
 }
 
@@ -137,17 +121,17 @@ int main_loop(Display *disp)
       if(!frozen)
       {
         pointer_toggle(0);
-        printf("disabling mouse!\n");
+        dprintf("disabling mouse!\n");
       }
 
       frozen=1;
-      freezecount=5;
+      freezecount=5; /* how long will the pointer be frozen */
     }
 
     if(frozen && --freezecount <= 0)
     {
       pointer_toggle(1);
-      printf("enabling mouse!!\n");
+      dprintf("enabling mouse!!\n");
       frozen=0;
     }
   }
@@ -158,8 +142,17 @@ int main(int argc, char *argv[])
 {
   Display *disp;
 
+  /* possible arguments: -v for verbose. every other is considered a xinput
+     device name. The last will take effect. */
   if(argc > 1)
-    pointer_device=argv[1];
+  {
+    int i;
+    for(i=1;i<argc;i++)
+      if(strcmp(argv[i], "-v") == 0)
+        verbose=1;
+      else
+        pointer_device=argv[i];
+  }
 
   disp=XOpenDisplay(NULL);
 
