@@ -40,7 +40,7 @@
 
 static int verbose=0;
 
-static char *pointer_device = "Logitech USB Receiver";
+static char *pointer_device = "ImPS/2 Generic Wheel Mouse";
 static char *pointer_property = "Device Enabled";
 
 
@@ -62,15 +62,17 @@ static void dprintf(const char *format,...)
 static int pointer_toggle(int on)
 {
   char buf[256];
+  int ret;
 
   on=!!on;
 
   snprintf(buf,sizeof(buf),"xinput set-prop \"%s\" \"%s\" %d",
     pointer_device,pointer_property,on);
 
-  dprintf("running command [%s]\n",buf);
+  ret=system(buf);
+  dprintf("ran command [%s] returned %d\n",buf,ret);
 
-  return system(buf);
+  return ret;
 }
 
 /* probe if keyboard has been active */
@@ -126,8 +128,6 @@ int main_loop(Display *disp)
 
   sighandler_install();
 
-  act=keyboard_active(disp);
-
   while(1)
   {
     usleep(200000);
@@ -173,6 +173,11 @@ int main(int argc, char *argv[])
   }
 
   disp=XOpenDisplay(NULL);
+  if(!disp)
+  {
+    fprintf(stderr,"Could not connect to X server\n");
+    return 1;    
+  }
 
   main_loop(disp);
 
