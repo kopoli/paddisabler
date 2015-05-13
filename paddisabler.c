@@ -44,7 +44,7 @@ static char *pointer_device = "ImPS/2 Generic Wheel Mouse";
 static char *pointer_property = "Device Enabled";
 
 
-static void dprintf(const char *format,...)
+static void verbose_printf(const char *format,...)
 {
   va_list ap;
 
@@ -70,7 +70,7 @@ static int pointer_toggle(int on)
     pointer_device,pointer_property,on);
 
   ret=system(buf);
-  dprintf("ran command [%s] returned %d\n",buf,ret);
+  verbose_printf("ran command [%s] returned %d\n",buf,ret);
 
   return ret;
 }
@@ -96,7 +96,7 @@ static void sighandler(int num)
 {
   pointer_toggle(1);
 
-  dprintf("enabling pointer device\n");
+  verbose_printf("enabling pointer device\n");
   exit(1);
 }
 
@@ -139,7 +139,7 @@ int main_loop(Display *disp)
       if(!frozen)
       {
         pointer_toggle(0);
-        dprintf("disabling mouse!\n");
+        verbose_printf("disabling mouse!\n");
       }
 
       frozen=1;
@@ -149,7 +149,7 @@ int main_loop(Display *disp)
     if(frozen && --freezecount <= 0)
     {
       pointer_toggle(1);
-      dprintf("enabling mouse!!\n");
+      verbose_printf("enabling mouse!!\n");
       frozen=0;
     }
   }
