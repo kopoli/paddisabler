@@ -29,3 +29,5 @@ paddisabler [-v] "The XInput device name"
 
 To find out the correct XInput device run: xinput list
 The -v flag is for verbose output.
+
+License: GPLv3+
